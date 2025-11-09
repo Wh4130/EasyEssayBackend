@@ -71,7 +71,6 @@ def update_summary_to_db(doc: Document):
         summary,
         dt.datetime.now().strftime("%I:%M%p on %B %d, %Y"),
         len(summary),
-        doc.user_id,
         doc.tag
     ]
 
