@@ -4,10 +4,13 @@ import time
 import uuid
 import logging
 import uvicorn 
-
 import os
 from dotenv import load_dotenv
+from scripts.summarize import * 
+from scripts.summarize import update_summary_to_db
 load_dotenv()
+
+from scripts.summarize import * 
 
 key = os.getenv("GEMINI_KEY")
 
@@ -17,23 +20,22 @@ app = FastAPI()
 # 儲存任務結果的簡單字典（生產環境可換 Redis / DB）
 tasks = {}
 
-class Document(BaseModel):
-    document: str
 
 # 模擬耗時摘要任務
-def summarize_document_task(task_id: str, document: str):
+def summarizeRUN(task_id: str, doc: Document):
     logger.info(f"Starting background task {task_id}")
     time.sleep(5)  # 模擬長任務
-    summary = f"Summarized content of: {document[:30]}..."
-    tasks[task_id] = {"status": "SUCCESS", "summary": summary}
+    result = update_summary_to_db(doc)
+    tasks[task_id] = {"status": "SUCCESS", "result": result}
     logger.info(f"Task {task_id} finished")
 
 @app.post("/summarize")
 async def summarize(doc: Document, background_tasks: BackgroundTasks):
     task_id = str(uuid.uuid4())  # 生成唯一 task_id
     tasks[task_id] = {"status": "PENDING"}
+
     # 把長時間任務丟給 background_tasks
-    background_tasks.add_task(summarize_document_task, task_id, doc.document)
+    background_tasks.add_task(summarizeRUN, task_id, doc)
     return {"task_id": task_id, "status": "PENDING"}
 
 @app.get("/result/{task_id}")
