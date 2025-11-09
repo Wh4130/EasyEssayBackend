@@ -8,6 +8,7 @@ import os
 from dotenv import load_dotenv
 from scripts.summarize import * 
 from scripts.summarize import update_summary_to_db
+from utils import *
 load_dotenv()
 
 from scripts.summarize import * 
@@ -30,6 +31,9 @@ def summarizeRUN(file_id: str, doc: Document):
     tasks[file_id]["status"] =  "SUCCESS"
     tasks[file_id]["result"] =  result
     logger.info(f"Task {file_id} finished")
+
+    
+
 
 @app.post("/summarize")
 async def summarize(doc: Document, background_tasks: BackgroundTasks):
