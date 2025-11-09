@@ -55,7 +55,7 @@ def summarize_document(doc: Document):
 
     summary = LlmManager.gemini_api_call(model, in_message)
 
-    return summary
+    return summary['summary']
 
 # **** main function
 def update_summary_to_db(doc: Document):
@@ -70,7 +70,7 @@ def update_summary_to_db(doc: Document):
         doc.filename,
         summary,
         dt.datetime.now().strftime("%I:%M%p on %B %d, %Y"),
-        doc.length,
+        len(summary),
         doc.user_id,
         doc.tag
     ]

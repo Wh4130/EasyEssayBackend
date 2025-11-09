@@ -5,6 +5,5 @@ class Document(BaseModel):
     content: str
     user_id: str
     tag: str 
-    length: int
     lang: str
     additional_prompt: str
