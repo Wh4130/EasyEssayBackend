@@ -6,9 +6,10 @@ from dotenv import load_dotenv, dotenv_values
 from scripts.db_conn import *
 from utils import *
 from schema.schema import Document
+import os
 
 load_dotenv()
-api_key = dotenv_values()['GEMINI_KEY']
+api_key = os.getenv('GEMINI_KEY')
 
 
 

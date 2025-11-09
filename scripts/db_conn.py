@@ -4,12 +4,13 @@ import gspread
 import json
 import pandas as pd
 import time
+import os
 
 load_dotenv()
 
-gs_key = dotenv_values().get('GSHEET_CREDENTIALS', '')
-db_sheet_url = dotenv_values().get('DB_SHEET_URL', '')
-db_worksheet = dotenv_values().get('DB_WORKSHEET', 'user_docs')
+gs_key = os.getenv('GSHEET_CREDENTIALS')
+db_sheet_url = os.getenv('DB_SHEET_URL')
+db_worksheet = os.getenv('DB_WORKSHEET')
 
 class GSDB_Connect:
 
