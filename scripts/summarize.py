@@ -55,7 +55,7 @@ def summarize_document(doc: Document):
 
     summary = LlmManager.gemini_api_call(model, in_message)
 
-    return summary['summary']
+    return json.loads(summary)['summary']
 
 # **** main function
 def update_summary_to_db(doc: Document):
