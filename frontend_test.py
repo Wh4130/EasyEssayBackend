@@ -14,7 +14,7 @@ json_data = {
     "additional_prompt": "Please ensure the summary is concise and highlights the main points."
 }
 
-responst = requests.post("http://0.0.0.0:8000/summarize", json=json_data)
+responst = requests.post("https://easyessaybackend.onrender.com/summarize", json=json_data)
     
 
 print(responst.json())
