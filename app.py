@@ -17,31 +17,32 @@ key = os.getenv("GEMINI_KEY")
 logger = logging.getLogger("uvicorn")
 app = FastAPI()
 
-# 儲存任務結果的簡單字典（生產環境可換 Redis / DB）
+# 儲存任務結果的簡單字典
 tasks = {}
 
 
-# 模擬耗時摘要任務
+# 摘要主函數
 def summarizeRUN(file_id: str, doc: Document):
+    '''main function for summarization task'''
+
     logger.info(f"Starting background task {file_id}")
-    time.sleep(5)  # 模擬長任務
     result = update_summary_to_db(doc)
-    tasks[file_id] = {"status": "SUCCESS", "result": result}
+    tasks[file_id]["status"] =  "SUCCESS"
+    tasks[file_id]["result"] =  result
     logger.info(f"Task {file_id} finished")
 
 @app.post("/summarize")
 async def summarize(doc: Document, background_tasks: BackgroundTasks):
-    tasks[doc.fileid] = {"fileid": doc.fileid, "status": "PENDING", "filename": doc.filename}
+    tasks[doc.fileid] = {"fileid": doc.fileid, "status": "PENDING", "filename": doc.filename, "user_id": doc.user_id, "tag": doc.tag, "result": None}
 
     # 把長時間任務丟給 background_tasks
     background_tasks.add_task(summarizeRUN, doc.fileid, doc)
     return tasks[doc.fileid]
 
-@app.get("/result/{fileid}")
-async def get_result(fileid: str):
-    if fileid not in tasks:
-        return {"error": "Task not found"}, 404
-    return tasks[fileid]
+@app.get("/tasks/{userid}")
+async def get_result(userid: str):
+    user_tasks = [task for task in tasks.values() if task["user_id"] == userid]
+    return user_tasks
 
 @app.get("/health")
 async def health_check():
