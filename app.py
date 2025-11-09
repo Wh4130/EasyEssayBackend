@@ -22,27 +22,26 @@ tasks = {}
 
 
 # 模擬耗時摘要任務
-def summarizeRUN(task_id: str, doc: Document):
-    logger.info(f"Starting background task {task_id}")
+def summarizeRUN(file_id: str, doc: Document):
+    logger.info(f"Starting background task {file_id}")
     time.sleep(5)  # 模擬長任務
     result = update_summary_to_db(doc)
-    tasks[task_id] = {"status": "SUCCESS", "result": result}
-    logger.info(f"Task {task_id} finished")
+    tasks[file_id] = {"status": "SUCCESS", "result": result}
+    logger.info(f"Task {file_id} finished")
 
 @app.post("/summarize")
 async def summarize(doc: Document, background_tasks: BackgroundTasks):
-    task_id = str(uuid.uuid4())  # 生成唯一 task_id
-    tasks[task_id] = {"status": "PENDING"}
+    tasks[doc.fileid] = {"fileid": doc.fileid, "status": "PENDING", "filename": doc.filename}
 
     # 把長時間任務丟給 background_tasks
-    background_tasks.add_task(summarizeRUN, task_id, doc)
-    return {"task_id": task_id, "status": "PENDING"}
+    background_tasks.add_task(summarizeRUN, doc.fileid, doc)
+    return tasks[doc.fileid]
 
-@app.get("/result/{task_id}")
-async def get_result(task_id: str):
-    if task_id not in tasks:
+@app.get("/result/{fileid}")
+async def get_result(fileid: str):
+    if fileid not in tasks:
         return {"error": "Task not found"}, 404
-    return tasks[task_id]
+    return tasks[fileid]
 
 @app.get("/health")
 async def health_check():

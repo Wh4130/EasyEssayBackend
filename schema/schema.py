@@ -7,3 +7,4 @@ class Document(BaseModel):
     tag: str 
     lang: str
     additional_prompt: str
+    db_url: str

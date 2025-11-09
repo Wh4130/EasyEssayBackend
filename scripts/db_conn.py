@@ -9,7 +9,6 @@ import os
 load_dotenv()
 
 gs_key = os.getenv('GSHEET_CREDENTIALS')
-db_sheet_url = os.getenv('DB_SHEET_URL')
 db_worksheet = os.getenv('DB_WORKSHEET')
 
 class GSDB_Connect:
@@ -30,7 +29,7 @@ class GSDB_Connect:
             return None
         
     @staticmethod
-    def fetch():
+    def fetch(db_sheet_url):
         sheet_id = GSDB_Connect.extract_sheet_id(db_sheet_url)
         client = GSDB_Connect.authenticate_google_sheets()
         try:
@@ -43,7 +42,7 @@ class GSDB_Connect:
             return "Connection Failed"
         
     @staticmethod
-    def update_to_sheet(row):    
+    def update_to_sheet(db_sheet_url, row):    
         client = GSDB_Connect.authenticate_google_sheets()
         sheet_id = GSDB_Connect.extract_sheet_id(db_sheet_url)
         if sheet_id is None:
