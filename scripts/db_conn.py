@@ -4,7 +4,6 @@ import gspread
 import json
 import pandas as pd
 import time
-import streamlit as st
 
 load_dotenv()
 
@@ -55,66 +54,5 @@ class GSDB_Connect:
 
         return "Document summary successfully updated to Google Sheet."
     
-    @staticmethod
-    def acquire_lock(sheet_id, worksheet_name, timeout = 10):
-        lock_maps = {
-            "user_info": "F1",
-            "user_docs": "H1",
-            "user_tags": "D1"
-        }
-
-        """
-        Acquire a lock before editing.
-        :param worksheet: The gspread worksheet object.
-        :param lock_pos: the position of the cell that stores the lock status
-        :param timeout: Max time (in seconds) to wait for lock.
-        :return: True if lock acquired, False otherwise.
-        """
-        start_time = time.time()
-        client = GSDB_Connect.authenticate_google_sheets()
-        sheet = client.open_by_key(sheet_id)
-        worksheet = sheet.worksheet(worksheet_name)
-        with st.spinner("Waiting for lock..."):
-            while time.time() - start_time < timeout:
-                lock_status = worksheet.acell(lock_maps[worksheet_name]).value
-
-                if lock_status == "Unlocked":
-                    # Acquire the lock
-                    worksheet.update_acell(lock_maps[worksheet_name], st.session_state["user_id"])
-                    
-                    return True
-                
-                elif lock_status == st.session_state["user_id"]:
-                    # Already locked by the same user
-                    return True
-                
-                time.sleep(0.5)
-
-        return False
     
-    @staticmethod
-    def release_lock(sheet_id, worksheet_name):
-        """
-        Release the lock after editing.
-        :param worksheet: The gspread worksheet object.
-        :param user_email: The email of the user trying to release the lock.
-        :return: True if lock released, False otherwise.
-        """
-        lock_maps = {
-            "user_info": "F1",
-            "user_docs": "H1",
-            "user_tags": "D1"
-        }
-
-        client = GSDB_Connect.authenticate_google_sheets()
-        sheet = client.open_by_key(sheet_id)
-        worksheet = sheet.worksheet(worksheet_name)
-        lock_status = worksheet.acell(lock_maps[worksheet_name]).value
-
-        if lock_status == st.session_state["user_id"]:
-            worksheet.update_acell(lock_maps[worksheet_name], "Unlocked")
-            return True
-        else:
-            st.write("Lock is not held by you!")
-            return False
 
