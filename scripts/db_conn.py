@@ -42,7 +42,108 @@ class GSDB_Connect:
             return "Connection Failed"
         
     @staticmethod
-    def update_to_sheet(db_sheet_url, row):    
+    def update(sheet_id, worksheet_name, row_idx: int, cols: list, values: list):
+        """Update single row for multiple columns"""
+        mapping = {
+            "user_docs": {
+                "_fileId": "A",
+                "_fileName": "B", 
+                "_summary": "C",
+                "_generatedTime": "D",
+                "_length": "E",
+                "_tag": "F"  
+            },
+            "user_tags": {
+                "_tagId": "A",
+                "_tag": "B" 
+            },
+            "user_info": {
+                "_dbURL": "F"
+            }
+        }
+
+        client = GSDB_Connect.authenticate_google_sheets()
+        for col, value in zip(cols, values):
+            try:
+                sheet = client.open_by_key(sheet_id)
+                worksheet = sheet.worksheet(worksheet_name)
+                pos = f"{mapping[worksheet_name][col]}{row_idx + 2}"
+                worksheet.update_acell(pos, value)
+                
+            except Exception as e:
+                return f"Connection Failed: {e}"
+            
+    @staticmethod
+    def acquire_lock(sheet_id, worksheet_name, file_id, timeout = 10):
+        lock_maps = {
+            "user_info": "G1",
+            "user_docs": "G1",
+            "user_tags": "C1",
+            "user_chats": "F1"
+        }
+
+        """
+        Acquire a lock before editing.
+        :param worksheet: The gspread worksheet object.
+        :param lock_pos: the position of the cell that stores the lock status
+        :param timeout: Max time (in seconds) to wait for lock.
+        :return: True if lock acquired, False otherwise.
+        """
+        start_time = time.time()
+        client = GSDB_Connect.authenticate_google_sheets()
+        sheet = client.open_by_key(sheet_id)
+        worksheet = sheet.worksheet(worksheet_name)
+        print("Waiting for lock...")
+        while time.time() - start_time < timeout:
+            lock_status = worksheet.acell(lock_maps[worksheet_name]).value
+
+            if lock_status == "Unlocked":
+                # Acquire the lock
+                worksheet.update_acell(lock_maps[worksheet_name], file_id)
+
+                print("Lock acquired.")
+                
+                return True
+            
+            elif lock_status == file_id:
+                # Already locked by the same task
+                print("Lock already held by this task.")
+                return True
+            
+            time.sleep(0.5)
+        
+
+        return False
+    
+    @staticmethod
+    def release_lock(sheet_id, worksheet_name, file_id):
+        """
+        Release the lock after editing.
+        :param worksheet: The gspread worksheet object.
+        :param user_email: The email of the user trying to release the lock.
+        :return: True if lock released, False otherwise.
+        """
+        lock_maps = {
+            "user_info": "G1",
+            "user_docs": "G1",
+            "user_tags": "C1",
+            "user_chats": "F1"
+        }
+
+        client = GSDB_Connect.authenticate_google_sheets()
+        sheet = client.open_by_key(sheet_id)
+        worksheet = sheet.worksheet(worksheet_name)
+        lock_status = worksheet.acell(lock_maps[worksheet_name]).value
+
+        if lock_status == file_id:
+            worksheet.update_acell(lock_maps[worksheet_name], "Unlocked")
+            return True
+        else:
+            print("Lock is not held by you!")
+            return False
+        
+    @staticmethod
+    def append_row(db_sheet_url, row):    
         client = GSDB_Connect.authenticate_google_sheets()
         sheet_id = GSDB_Connect.extract_sheet_id(db_sheet_url)
         if sheet_id is None:

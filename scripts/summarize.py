@@ -74,6 +74,6 @@ def update_summary_to_db(doc: Document):
         doc.tag
     ]
 
-    result = GSDB_Connect.update_to_sheet(doc.db_url, instance)
+    result = GSDB_Connect.append_row(doc.db_url, instance)
     
     return instance
