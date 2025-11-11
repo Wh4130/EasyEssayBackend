@@ -1,4 +1,5 @@
 from fastapi import FastAPI, BackgroundTasks
+import asyncio
 from pydantic import BaseModel
 import time
 import datetime as dt
@@ -10,8 +11,8 @@ import os
 from dotenv import load_dotenv
 from scripts.summarize import LlmManager, Summarizer
 from scripts.db_conn import *
-from scripts.pinecone_manager import Pinecone_Upsert_RUN
-from schema.schema import Document
+from scripts.pinecone_manager import Pinecone_Upsert_RUN, PineconeManager
+from schema.schema import Document, Message
 from utils import *
 load_dotenv()
 
@@ -23,6 +24,9 @@ logger = logging.getLogger("uvicorn")
 
 # --- initialize FastAPI app
 app = FastAPI()
+
+# --- initialize pinecone instance
+pc = PineconeManager()
 
 
 
@@ -44,8 +48,16 @@ async def upsert_to_pinecone(doc: Document, background_tasks: BackgroundTasks):
     """start a background task to upsert requested document to pinecone"""
 
     # async run in background
-    background_tasks.add_task(Pinecone_Upsert_RUN, doc.content, doc.fileid, "easyessay", logger)
+    background_tasks.add_task(pc.insert_docs, doc.content, doc.fileid, "easyessay")
     return {"message": "Pinecone upsert task started", "fileid": doc.fileid}
+
+@app.post("/query_from_pinecone")
+async def pinecone_query_api(msg: Message):
+    """search top k most relevant passage from pinecone and return"""
+
+    result = await asyncio.to_thread(pc.search, msg.query, msg.param_k, msg.fileid, "easyessay")
+    
+    return {"result": result}
 
 
 @app.get("/health")

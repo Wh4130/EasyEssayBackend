@@ -8,3 +8,8 @@ class Document(BaseModel):
     lang: str
     additional_prompt: str
     db_url: str
+
+class Message(BaseModel):
+    query: str
+    fileid: str
+    param_k: int

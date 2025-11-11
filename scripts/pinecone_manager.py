@@ -93,10 +93,9 @@ class PineconeManager():
 
         return docs
     
-    def delete_from_pinecone(self, namespace, doc_title, index_name):
-        with st.spinner(f"deleting file **{doc_title}** from the vector store..."):
-            index = self.pc.Index(index_name)
-            index.delete_namespace(namespace = namespace)
+    def delete_from_pinecone(self, namespace, index_name):
+        index = self.pc.Index(index_name)
+        index.delete_namespace(namespace = namespace)
 
 
 def Pinecone_Upsert_RUN(contents, fileid, database_index_name, logger):
