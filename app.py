@@ -9,15 +9,12 @@ import logging
 import uvicorn 
 import os
 from dotenv import load_dotenv
-from scripts.summarize import LlmManager, Summarizer
+from scripts.summarize import Summarizer
 from scripts.db_conn import *
 from scripts.pinecone_manager import Pinecone_Upsert_RUN, PineconeManager
 from schema.schema import Document, Message
 from utils import *
 load_dotenv()
-
-# --- initialize GEMINI api key
-key = os.getenv("GEMINI_KEY")
 
 # --- initialize logger
 logger = logging.getLogger("uvicorn")
