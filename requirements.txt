@@ -12,5 +12,6 @@ pypdf
 google-generativeai
 google-genai
 google-auth>=2.15.0
+litellm
 langchain-pinecone
 langchain_text_splitters
