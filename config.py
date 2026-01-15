@@ -5,6 +5,6 @@ class Settings(BaseSettings):
 
 Config = Settings()
 
-broker_url = Config.REDIS_URL
-result_backend = Config.REDIS_URL
+broker_url = Config.model_config.REDIS_URL
+result_backend = Config.model_config.REDIS_URL
 
