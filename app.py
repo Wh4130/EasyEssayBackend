@@ -49,16 +49,14 @@ app = FastAPI(lifespan = lifespan)
 # --- APIs
 
 
-# @app.post("/summarize")
-# async def summarize(doc: Document, background_tasks: BackgroundTasks):
-#     """
-#     start a background task to summarize requested document
-#     use async def because this endpoint is just a registration task, which does not block the main loop
-#     """
-    
-#     # Summarizer.RUN is a synchronous function
-#     background_tasks.add_task(Summarizer.RUN, doc.fileid, doc, logger)
-#     return {"message": "Summarization task started", "fileid": doc.fileid}
+@app.post("/")
+async def index():
+    """
+    Entry point
+    """
+    return {"status": "ok"}
+
+
 @app.post("/summarize")
 async def summarize(doc: Document):
     """
