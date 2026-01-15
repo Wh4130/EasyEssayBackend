@@ -5,6 +5,7 @@ uvicorn[standard]
 pydantic-settings
 celery
 redis
+eventlet
 gspread
 pandas
 datetime
