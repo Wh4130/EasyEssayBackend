@@ -13,8 +13,6 @@ oauth2client
 openpyxl
 python-dotenv
 pypdf
-google-generativeai
-google-genai
 google-auth>=2.15.0
 litellm
 langchain-pinecone

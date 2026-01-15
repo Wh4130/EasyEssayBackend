@@ -1,4 +1,3 @@
-import google.generativeai as genai
 import datetime as dt
 import json
 from prompts.summarize import *
