@@ -49,7 +49,7 @@ app = FastAPI(lifespan = lifespan)
 # --- APIs
 
 
-@app.post("/")
+@app.get("/")
 async def index():
     """
     Entry point
