@@ -14,9 +14,11 @@ from dotenv import load_dotenv
 from scripts.summarize import Summarizer
 from scripts.db_conn import *
 from scripts.pinecone_manager import Pinecone_Upsert_RUN, PineconeManager
-from schema.schema import Document, Message
+from models.models import Document, Message, TestDB
 from utils import *
 load_dotenv()
+
+from celery_app import c_app, c_summarize_task, c_upsert_to_pinecone
 
 # --- initialize logger
 logger = logging.getLogger("uvicorn")
@@ -47,27 +49,38 @@ app = FastAPI(lifespan = lifespan)
 # --- APIs
 
 
+# @app.post("/summarize")
+# async def summarize(doc: Document, background_tasks: BackgroundTasks):
+#     """
+#     start a background task to summarize requested document
+#     use async def because this endpoint is just a registration task, which does not block the main loop
+#     """
+    
+#     # Summarizer.RUN is a synchronous function
+#     background_tasks.add_task(Summarizer.RUN, doc.fileid, doc, logger)
+#     return {"message": "Summarization task started", "fileid": doc.fileid}
 @app.post("/summarize")
-async def summarize(doc: Document, background_tasks: BackgroundTasks):
+async def summarize(doc: Document):
     """
     start a background task to summarize requested document
     use async def because this endpoint is just a registration task, which does not block the main loop
     """
     
     # Summarizer.RUN is a synchronous function
-    background_tasks.add_task(Summarizer.RUN, doc.fileid, doc, logger)
-    return {"message": "Summarization task started", "fileid": doc.fileid}
+    task = c_summarize_task.delay(doc.model_dump())
+
+    return {"message": "Summarization task started", "fileid": doc.fileid, "task_id": task.id}
 
 @app.post("/upsert_to_pinecone")
-async def upsert_to_pinecone(doc: Document, background_tasks: BackgroundTasks):
+async def upsert_to_pinecone(doc: Document):
     """
     start a background task to upsert requested document to pinecone
     use async def because this endpoint is just a registration task, which does not block the main loop
     """
 
-    # async run in background
-    background_tasks.add_task(context["pc"].insert_docs, doc.content, doc.fileid, "easyessay")
-    return {"message": "Pinecone upsert task started", "fileid": doc.fileid}
+    task = c_upsert_to_pinecone.delay(doc.model_dump())
+
+    return {"message": "Pinecone upsert task started", "fileid": doc.fileid, "task_id": task.id}
 
 @app.post("/query_from_pinecone")
 async def pinecone_query_api(msg: Message):
@@ -78,9 +91,17 @@ async def pinecone_query_api(msg: Message):
     return {"result": result}
 
 
-@app.get("/health")
-async def health_check():
-    return {"status": "ok"}
+@app.get("/task-status/{task_id}")
+def get_task_status(task_id: str):
+    task = c_app.AsyncResult(task_id)
+
+    if task.state == "PENDING":
+        return {"status": "pending"}
+    elif task.state == "SUCCESS":
+        return {"status": "completed", "result": task.result}
+    else:
+        return {"status": "failed", "error": task.info}
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

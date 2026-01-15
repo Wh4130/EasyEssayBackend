@@ -6,7 +6,7 @@ from dotenv import load_dotenv, dotenv_values
 from scripts.db_conn import *
 from utils import *
 from litellm import completion
-from schema.schema import Document
+from models.models import Document
 import os
 
 load_dotenv()
@@ -54,7 +54,7 @@ class Summarizer:
         return summary
 
     @staticmethod
-    def create_row(doc: Document, logger):
+    def create_row(doc: Document):
         """create a new row in the user doc worksheet"""
         instance = [
             doc.fileid,
@@ -65,10 +65,10 @@ class Summarizer:
             doc.tag
         ]
         GSDB_Connect.append_row(doc.db_url, instance)
-        logger.info(f"Created new row in DB for fileid: {doc.fileid}")
+        # logger.info(f"Created new row in DB for fileid: {doc.fileid}")
 
     @staticmethod
-    def update_summary_to_row(doc: Document, summary: str, logger):
+    def update_summary_to_row(doc: Document, summary: str):
         """update the summary field in the user doc worksheet"""
 
         # Acquire lock
@@ -82,7 +82,7 @@ class Summarizer:
         df = GSDB_Connect.fetch(doc.db_url)
         row_idx = df.index[df['_fileId'] == doc.fileid].tolist()
         if not row_idx:
-            logger.error("No matching fileid found in DB for update.")
+            print("No matching fileid found in DB for update.")
             return
         row_number = row_idx[0]
         GSDB_Connect.update(
@@ -92,7 +92,7 @@ class Summarizer:
             cols = ["_summary", "_generatedTime", "_length"],
             values = [summary, dt.datetime.now().strftime("%I:%M%p on %B %d, %Y"), len(summary)]
         )
-        logger.info(f"Updated summary in DB for fileid: {doc.fileid}")
+        print(f"Updated summary in DB for fileid: {doc.fileid}")
 
         # Release lock
         GSDB_Connect.release_lock(
@@ -104,11 +104,11 @@ class Summarizer:
 
     # 主函數
     @staticmethod
-    def RUN(file_id: str, doc: Document, logger):
+    def RUN(file_id: str, doc: Document):
         '''main function for summarization task'''
 
-        logger.info(f"Starting background task {file_id}")
-        Summarizer.create_row(doc, logger)
+        print(f"Starting background task {file_id}")
+        Summarizer.create_row(doc)
         result = Summarizer.summarize_document(doc) 
-        Summarizer.update_summary_to_row(doc, result, logger)
-        logger.info(f"Task {file_id} finished")
+        Summarizer.update_summary_to_row(doc, result)
+        print(f"Task {file_id} finished")

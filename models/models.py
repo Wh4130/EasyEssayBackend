@@ -13,3 +13,9 @@ class Message(BaseModel):
     query: str
     fileid: str
     param_k: int
+
+class TestDB(BaseModel):
+    gs_url: str
+    fileid: str
+    filename: str
+    content: str

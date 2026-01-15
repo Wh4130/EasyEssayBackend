@@ -2,6 +2,9 @@ pandas
 openpyxl
 fastapi
 uvicorn[standard]
+pydantic-settings
+celery
+redis
 gspread
 pandas
 datetime
