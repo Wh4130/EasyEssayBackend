@@ -21,7 +21,7 @@ class PineconeManager():
             model="multilingual-e5-large",
             pinecone_api_key = os.environ['PINECONE_API_KEY']
         )
-        self.text_splitter = RecursiveCharacterTextSplitter(chunk_size = 500, chunk_overlap = 0)
+        self.text_splitter = RecursiveCharacterTextSplitter(chunk_size = 500, chunk_overlap = 100)
 
     def list_namespaces(self, index_name):
 

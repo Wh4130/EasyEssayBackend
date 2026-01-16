@@ -26,3 +26,8 @@ def c_upsert_to_pinecone(doc_dict):
     doc = Document(**doc_dict)
     pc = PineconeManager()
     pc.insert_docs(doc.content, doc.fileid, "easyessay" )
+
+@c_app.task()
+def c_delete_from_pinecone(namespace):
+    pc = PineconeManager()
+    pc.delete_from_pinecone(namespace, "easyessay")

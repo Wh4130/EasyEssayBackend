@@ -8,6 +8,7 @@ import pandas
 import uuid
 import logging
 import uvicorn 
+from contextlib import asynccontextmanager
 import os
 from dotenv import load_dotenv
 
@@ -18,7 +19,7 @@ from models.models import Document, Message, TestDB
 from utils import *
 load_dotenv()
 
-from celery_app import c_app, c_summarize_task, c_upsert_to_pinecone
+from celery_app import c_app, c_summarize_task, c_upsert_to_pinecone, c_delete_from_pinecone
 
 # --- initialize logger
 logger = logging.getLogger("uvicorn")
@@ -26,6 +27,7 @@ logger = logging.getLogger("uvicorn")
 # --- initialize global variable container
 context = {}
 
+@asynccontextmanager
 async def lifespan(*args, **kwargs):
     """
     lifespan manager for FastAPI app.
@@ -61,7 +63,7 @@ async def index():
 async def summarize(doc: Document):
     """
     start a background task to summarize requested document
-    use async def because this endpoint is just a registration task, which does not block the main loop
+    use async def because this endpoint just registers the task into celery, which does not block the main loop
     """
     
     # Summarizer.RUN is a synchronous function
@@ -73,12 +75,26 @@ async def summarize(doc: Document):
 async def upsert_to_pinecone(doc: Document):
     """
     start a background task to upsert requested document to pinecone
-    use async def because this endpoint is just a registration task, which does not block the main loop
+    use async def because this endpoint just registers the task into celery, which does not block the main loop
     """
 
     task = c_upsert_to_pinecone.delay(doc.model_dump())
 
     return {"message": "Pinecone upsert task started", "fileid": doc.fileid, "task_id": task.id}
+
+@app.post("/delete_from_pinecone")
+async def delete_from_pinecone(doc: Document):
+    """
+    start a background task to delete requested document to pinecone
+    use async def because this endpoint just registers the task into celery, which does not block the main loop
+    """
+
+    task = c_delete_from_pinecone.delay(doc.fileid)
+
+    return {"message": "Pinecone delete task started", "fileid": doc.fileid, "task_id": task.id}
+
+
+
 
 @app.post("/query_from_pinecone")
 async def pinecone_query_api(msg: Message):
