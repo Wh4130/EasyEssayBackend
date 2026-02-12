@@ -60,38 +60,55 @@ async def index():
 
 
 @app.post("/summarize")
-async def summarize(doc: Document):
+async def summarize(doc: Document, background_tasks: BackgroundTasks):
     """
     start a background task to summarize requested document
     use async def because this endpoint just registers the task into celery, which does not block the main loop
     """
     
-    # Summarizer.RUN is a synchronous function
-    task = c_summarize_task.delay(doc.model_dump())
+    # ** Celery Version
+    # # Summarizer.RUN is a synchronous function
+    # task = c_summarize_task.delay(doc.model_dump())
 
-    return {"message": "Summarization task started", "fileid": doc.fileid, "task_id": task.id}
+    # ** Background Runner
+    background_tasks.add_task(Summarizer.RUN, doc.fileid, doc)
+
+    return {"message": "Summarization task started", "fileid": doc.fileid}
 
 @app.post("/upsert_to_pinecone")
-async def upsert_to_pinecone(doc: Document):
+async def upsert_to_pinecone(doc: Document, background_tasks: BackgroundTasks):
     """
     start a background task to upsert requested document to pinecone
     use async def because this endpoint just registers the task into celery, which does not block the main loop
     """
 
-    task = c_upsert_to_pinecone.delay(doc.model_dump())
+    
 
-    return {"message": "Pinecone upsert task started", "fileid": doc.fileid, "task_id": task.id}
+    # ** Celery Version
+    # task = c_upsert_to_pinecone.delay(doc.model_dump())
+
+    # ** Background Runner
+    pc = PineconeManager()
+    background_tasks.add_task(pc.insert_docs, doc.content, doc.fileid, "easyessay")
+
+
+    return {"message": "Pinecone upsert task started", "fileid": doc.fileid}
 
 @app.post("/delete_from_pinecone")
-async def delete_from_pinecone(doc: Document):
+async def delete_from_pinecone(doc: Document, background_tasks: BackgroundTasks):
     """
     start a background task to delete requested document to pinecone
     use async def because this endpoint just registers the task into celery, which does not block the main loop
     """
 
-    task = c_delete_from_pinecone.delay(doc.fileid)
+    # ** Celery Version
+    # task = c_delete_from_pinecone.delay(doc.fileid)
 
-    return {"message": "Pinecone delete task started", "fileid": doc.fileid, "task_id": task.id}
+    # ** Background Runner
+    pc = PineconeManager()
+    background_tasks.add_task(pc.delete_from_pinecone, doc.fileid, "easyessay")
+
+    return {"message": "Pinecone delete task started", "fileid": doc.fileid}
 
 
 
@@ -105,16 +122,6 @@ async def pinecone_query_api(msg: Message):
     return {"result": result}
 
 
-@app.get("/task-status/{task_id}")
-def get_task_status(task_id: str):
-    task = c_app.AsyncResult(task_id)
-
-    if task.state == "PENDING":
-        return {"status": "pending"}
-    elif task.state == "SUCCESS":
-        return {"status": "completed", "result": task.result}
-    else:
-        return {"status": "failed", "error": task.info}
 
 
 if __name__ == "__main__":
