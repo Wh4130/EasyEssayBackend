@@ -28,3 +28,5 @@ def email_sender(recipient_email, body):
         return "郵件傳送失敗!"
     smtp.quit()
         
+
+print("Hello world")
