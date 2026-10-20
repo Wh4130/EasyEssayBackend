@@ -5,7 +5,7 @@ import re
 class ChatBot():
 
     def __init__(self, 
-                 model_key = "gpt-oss-120b", 
+                 model_key = "nvidia/nemotron-3-ultra-550b-a55b:free",
                  temperature = 0,
                  RAG = True):
         
@@ -55,14 +55,15 @@ class ChatBot():
 
 
         # * Call API
-        full_model_name = f"cerebras/{self.model_key}"
+        full_model_name = f"openrouter/{self.model_key}"
         response_stream = completion(
             model=full_model_name,
             messages=msgs,
             max_tokens=40000,
             stream = True,
             temperature=self.temperature,
-            top_p=1
+            top_p=1,
+            extra_body={"reasoning": {"enabled": False}}
         )
 
         # # * Get Response

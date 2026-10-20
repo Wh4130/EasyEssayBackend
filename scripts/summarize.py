@@ -9,7 +9,7 @@ from models.models import Document
 import os
 
 load_dotenv()
-os.environ["CEREBRAS_API_KEY"] = os.getenv('CEREBRAS_API_KEY')
+os.environ["OPENROUTER_API_KEY"] = os.getenv('OPENROUTER_KEY')
 
 
 
@@ -20,9 +20,10 @@ def generate_response(messages):
     Call LLM and return message that contents both tool usage and chat content
     """
     response = completion(
-        model="cerebras/gpt-oss-120b",
+        model="openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
         messages=messages,
-        max_tokens=30000
+        max_tokens=30000,
+        extra_body={"reasoning": {"enabled": False}}
     )
     
     # 直接回傳 Message 物件，這是 LiteLLM 內部的標準格式
